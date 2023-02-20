@@ -1,0 +1,236 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, Java, PHP, Ruby, Perl,
+C#, VB, Swift, Pascal, Fortran, Haskell, Objective-C, Assembly, HTML, CSS, JS, SQLite, Prolog.
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+// 缺省参数
+// 常规缺省参数
+// 类型模板参数缺省值的规矩：如果某个模板参数有缺省值，那么从这个有缺省值的模板参数开始，
+// 后面的所有模板参数都必须得有缺省值
+// 类模板偏特化版本的类型模板参数，不可以设置默认缺省值
+
+// 后面的模板参数依赖前面的模板参数
+
+// 类型别名
+// 考虑到实际项目中模板类型名都比较长，
+// 所以一般都用typedef 或者 using给这些类型名取一个额外的别名简化书写
+
+// 非类型模板参数
+// 数字型一般是常量，类型也限制在整形，指针类型等（和函数模板一样）
+// 1）全局指针不能作为模板参数
+// 2）字符串常量也无法作为模板参数
+// c++标准委员会有一些特殊的考虑
+// 比如说：有两个TC<"hello">类型，那能说这两个是类型是一样的码？从字面值上来说，这两个都是TC<"hello">，"hello"字面值都是一样的
+// 但是从理论上来说，这两个"hello"保存的地址可能都不会是同一个地址，
+// 除此之外，观察这个模板参数，template<const char *p>，他是一个指针，指针表示一个地址，
+// 如果从地址的角度来看的话，显然两个TC<"hello">就不应该是同一个类型，所以，如果允许这种字符串常量作为模板参数
+// 就会导致字面值和理论实际冲突。（虽然字面上两个字符串"hello"相等，但是他们保存的地址不一定是同一个，所以他们两个相同的名字TC<"hello">却不是同一个类型）
+// 为什么也不允许浮点类型参数作为非类型模板参数呢？因为浮点型数字保存的不是一个精确的数字
+// 两个一样的浮点数实际上保存的值却不是相同的，就不能算是同一个类型，为了避免这种不确定的元素，也不允许使用浮点数作为非类型模板参数
+
+
+namespace _nmsp1
+{
+    // template<typename T, typename U>
+    template<typename T = int, typename U = std::string>
+    class TC
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC泛化版本构造函数执行" << std::endl;
+        }
+        void funcTest()
+        {
+            std::cout << "TC泛化版本funcTest()普通成员函数执行" << std::endl;
+        }
+    };
+    
+    // 特化版本（类模板偏特化版本的类模板参数，不可以设置默认缺省值）
+    template<typename T>
+    class TC<T, int>
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC<T, int>特化化版本构造函数执行" << std::endl;
+        }
+        void funcTest()
+        {
+            std::cout << "TC<T, int>特化版本funcTest()普通成员函数执行" << std::endl;
+        }
+    };
+    
+    void func()
+    {
+        TC tcs1;        // 使用了缺省的模板类型参数，所以这里实例化的时候，尖括号里可以什么都不给，尖括号也可以不给
+        tcs1.funcTest();
+        // TC泛化版本构造函数执行
+        // TC泛化版本funcTest()普通成员函数执行
+        
+        TC<double> tcs2;        // 表示<>中第一个类型不使用缺省值，第二个使用缺省值
+        tcs2.funcTest();
+    }
+}
+
+namespace _nmsp2
+{
+    
+    // 后面的模板参数依赖前面的模板参数
+    
+    template<typename T, typename U = T*>
+    class TC
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC()" << std::endl;
+        }
+        void func()
+        {
+            std::cout << "func()" << std::endl;
+        }
+    };
+    
+    void func()
+    {
+        TC<double> tc1;
+        tc1.func();
+        // TC()
+        // func()
+        TC<double, int> tc2;
+        tc2.func();
+        // TC()
+        // func()
+    }
+}
+
+namespace _nmsp3
+{
+    
+    // 在模板声明中使用缺省参数（不建议使用）
+    
+    // 声明1：（指定了类型模板参数V和W的缺省值）
+    template<typename T, typename U, typename V = int, typename  W = char>
+    class TC;
+    
+    // 声明2：（指定了类型模板参数U的缺省值）
+    // 注意这里，以V和W的缺省值已经在上面的声明中给了，所以这里就不用再给V和W缺省值，（他们及时不写，在这里也是有缺省值的）
+    template<typename T, typename U = double, typename V, typename  W>
+    class TC;
+    
+    // 定义泛化版本TC（定义的时候都不需要给缺省值，因为上面声明的时候已经给了缺省值了）
+    template<typename T, typename U, typename V, typename  W>
+    class TC
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC()构造函数" << std::endl;
+        }
+        void func()
+        {
+            std::cout << "TC::func()普通成员函数执行" << std::endl;
+        }
+    };
+    
+    // 类型别名(typedef写法)
+    // typedef TC<int, float> IF_TC;
+    
+    // 类型别名(using写法)
+    using IF_TC = TC<int, float>;
+    
+    void func()
+    {
+        TC<std::string> tc1;    // 因为第2， 3，4个，模板参数都有缺省值，所以这里<>里只提供一个模板参数
+        tc1.func();
+        // TC()构造函数
+        // TC::func()普通成员函数执行
+        
+        IF_TC iftc1;    //等价于TC<int, float> iftc1;
+        iftc1.func();
+    }
+}
+
+namespace _nmsp4
+{
+    template<typename T, typename U, size_t arrsize = 8>
+    class TC
+    {
+    public:
+        T m_arr[arrsize];
+        // arrsize是一个编译的时候就有值的数字，所以这个数组大小是在编译期间就确定大小的（数组这种东西，长度是不能动态改变的）
+        // 编译期间编译器就会传递进来arrsize的大小来确定数组m_arr的大小
+        void funcTest();
+        
+    };
+    
+    template<typename T, typename U, size_t arrsize>
+    void TC<T, U, arrsize>::funcTest()
+    {
+        std::cout << "TC<T, U, arrsize>::funcTest()泛化版本执行了" << std::endl;
+    }
+    
+    void func()
+    {
+        TC<double, float> testTc;   // 缺省的第三个参数是8
+        for(size_t i = 0; i < 8; ++i)
+        {
+            testTc.m_arr[i] = 23.3 * (i+23);
+        }
+        
+        std::cout << testTc.m_arr[7] << std::endl;
+        
+        TC<double, float, 18> testTc2;   // 缺省的第三个参数是8
+        for(size_t i = 0; i < 18; ++i)
+        {
+            testTc2.m_arr[i] = 3.3 * (i+2);
+        }
+        
+        std::cout << testTc2.m_arr[17] << std::endl;
+    }
+}
+
+namespace _nmsp5
+{
+    template<const char *p>
+    class TC
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC::TC()构造函数执行了" << std::endl;
+            std::cout << p << std::endl;
+        }
+    };
+    
+    const char *p = "hello";    // 全局指针
+    const char g_p[] = "hello"; // 全局数组
+    
+    void func()
+    {
+        // TC<P> testTC;        // 全局指针不能作为模板参数
+        TC<g_p> testTC2;    // 改为数组就可以
+        // TC::TC()构造函数执行了
+        // hello
+        
+        // TC<"hello"> testTC3;    // 不行，字符串常量也无法作为模板参数
+    }
+}
+
+int main()
+{
+    // _nmsp1::func();
+    // _nmsp2::func();
+    // _nmsp3::func();
+    // _nmsp4::func();
+    _nmsp5::func();
+
+    return 0;
+}

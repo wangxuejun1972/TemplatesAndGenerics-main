@@ -1,0 +1,209 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+using namespace std;
+
+// 折叠表达式（Fold Expressions ）
+// C++17中引入的，目的：计算某个值，(表达式的结果当然是一个值)
+// 该值的特殊性在于：他与所有可变参有关，而不是与单独的某个可变参有关。需要所有可变参都参与计算，才能求出该值
+
+
+// 折叠表达式 有四种格式，一元左折，一元右折，二元左折，二元右折
+// 注意每一种格式的折叠表达式都需要用圆括号扩住
+// 左折：就是参数从左侧开始计算
+// 右折：参数从右侧开始计算
+
+// 一元左折
+// 格式：(... 运算符  一包参数);
+// 计算过程：
+// (((参数1  运算符 参数2) 运算符 参数3)...运算符 参数n);
+
+// 一元右折
+// 格式：(一包参数 运算符 ...);
+// (参数1 运算符 (...(参数n-1 运算符 参数 n)));
+
+// 二元左折
+// 格式：
+// (init 运算符 ... 运算符 一包参数);
+// 计算过程
+// (((init 运算符 参数1) 运算符 参数2)...运算符 参数n);
+// init 表示啥？
+// 表示一个初始的东西，他可能是一个值，也可能是一个其他东西
+// 注意：二元左折里两个运算符必须一样，如果不一样则会编译报错
+
+// 二元右折
+// 格式：
+// (一包参数 运算符 ... 运算符 init);
+// 计算过程：
+// (参数1 运算符 (...(参数n-1 运算符 ( 参数n 运算符 init))));  
+// init 表示啥？
+// 表示一个初始的东西，他可能是一个值，也可能是一个其他东西
+
+// 可变参表达式
+
+namespace _nmsp1
+{
+    template<typename... T>
+    auto add_args(T... args)
+    {
+        return (... +args);
+        // 注意这里的()不能省略，否者会编译错误
+    }
+    
+    void func()
+    {
+        std::cout << add_args(12, 42, 352, 354, 23) << std::endl;   // 783
+        
+    }
+}
+
+namespace _nmsp2
+{
+    template<typename... T>
+    auto add_args(T... args)
+    {
+        return (args + ...);
+        // 注意这里的()不能省略，否者会编译错误
+    }
+    
+    template<typename... U>
+    auto sub_args(U... args)
+    {
+        return (args - ...);
+    }
+    
+    void func()
+    {
+        std::cout << add_args(12, 42, 352, 354, 23) << std::endl;   // 783
+        
+        std::cout << sub_args(1, 10, 100, 1000) << std::endl;       // -909
+        // 100 - 1000 = -900
+        // 10 - (-900) = 910
+        // 1 - 910 = -909
+        
+    }
+}
+
+namespace _nmsp3
+{
+    template<typename... T>
+    auto sub_val_left(T... args)
+    {
+        // return (1000 - ... + args);
+        // 注意：二元左折里两个运算符必须一样，如果不一样则会编译报错
+        // 
+        return (1000 - ... - args);
+    }
+    
+    template<typename... T>
+    void print_val_left(T... args)
+    {
+        (cout<< ... << args );
+        
+        // 这里就是 起始值 cout 和 << 和 参数1 进行运算（输出参数1，返回 cout）
+        // 然后返回的 cout 再和 << 和 参数2 进行运算 。。。。。。。。
+        // cout << 1000 这个的执行结果是 ：屏幕上输出 1000  ，
+        // 然后：一个基本知识：cout 他是一个对象，他的<<运算符执行之后，返回的还是一个 cout 对象 
+        // print_val_left(1000, 1000, 100, 10, 1);
+        // 所以对于上面这个行代码，他的执行逻辑就是
+        // (((((cout << 10000 ) << 1000) << 100 ) << 10 ) << 1)
+        // 执行了5次cout<<，然后依次把参数包了的参数打印出来
+    }
+    
+    void func()
+    {
+        std::cout << sub_val_left(100, 10 , 1) << std::endl;
+        // (((1000 - 100)-10)-1)  = 889;
+        
+        print_val_left(1000, 1000, 100, 10, 1);
+        // 10001000100101
+    }
+}
+
+namespace _nmsp4
+{
+    template<typename... T>
+    auto sub_val_right(T... args)
+    {
+        return (args - ... - 10000);
+    }
+    
+    // 貌似这种 cout 不能像二元左折 一样进行使用
+    // template<typename... U>
+    // void print_val_right(U... args)
+    // {
+    //     (args << ... << cout );
+    // }
+    
+    
+    void func()
+    {
+        std::cout << sub_val_right(10000, 1000, 100, 10, 1) << std::endl;   // -909
+        // (10000 - ( 1000 - (100 - (10 - (1 - 10000))))) = -909
+        
+        // print_val_right(10000, 1000, 100, 10, 1);
+    }
+}
+
+namespace _nmsp5
+{
+    template<typename... T>
+    auto print_result(T const&...  args)
+    {
+        (cout << ... << args) << "结束" << endl;
+        return (... + args);
+    }
+    
+    template<typename... T>
+    void calcNum(T const&... args)
+    {
+        std::cout << print_result(2 * args...) << std::endl;
+        // std::cout << print_result(args * 2 ...) << std::endl; 
+        // 这种写法也OK（但是...如果不和args紧紧挨着，中间就必须有空格）
+        // 注意这里的写法，这里就相当于是把参数包进行了 *2 处理，参数值翻倍
+        // 所以，如果需要对参数包进行特殊处理，就需要项这种，新引入一个可变参数模板
+        // 2 * args... 这个就是一个可变参表达式
+        // 等价于(1 * 参数1, 2* 参数2 , 2* 参数3,.... 2* 参数n)
+        // (2*args); 这种写法不行 （args后面没有...也不行）
+        // (args... *2);    这种也不行（args放前面也不行）
+        // (args * 2 ...);  这种可以（...在后面，而且不去atgs紧接着也是可以的）但是...如果不和args紧紧挨着，中间就必须有空格
+        // ((args * 2) ...); 这种也可以 
+        // (args + args...); 这种也是可以的，一个待...，一个不带 
+        // (args... + args...); 或者 (args ... + args...); 或者 (args... + args);
+        // 这些又都不可以
+    }
+    
+    void func()
+    {
+        std::cout << print_result(1, 10, 100, 1000, 10000) << std::endl;
+        // 110100100010000结束
+        // 11111
+        
+        calcNum(1, 10, 100, 1000, 10000);
+        // 220200200020000结束
+        // 22222
+        
+    }
+}
+
+int main()
+{
+    // _nmsp1::func();
+    // _nmsp2::func();
+    // _nmsp3::func();
+    // _nmsp4::func();
+    _nmsp5::func();
+
+    return 0;
+}
+
+
+

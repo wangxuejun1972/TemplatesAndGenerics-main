@@ -1,0 +1,141 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, Java, PHP, Ruby, Perl,
+C#, VB, Swift, Pascal, Fortran, Haskell, Objective-C, Assembly, HTML, CSS, JS, SQLite, Prolog.
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+// 1）从表现形式上，有父类有子类，父类中必须含有虚函数，子类重写父类虚函数
+// 2）父类指针指向子类对象 或者 父类引用绑定子类对象
+// 3）当以父类的指针或者引用调用子类中重写了的虚函数时，就能看出多态了，因为此时调用的是子类的虚函数
+
+// 模板中的多态
+// 并不需要用到父类以及继承的概念，子类也不需要虚函数
+// 压根就不需要父类指针指向子类对象或者父类引用绑定子类对象这种概念，
+
+// 编译期间，编译器会实例化出eatTnpl<Man>以及eatTnpl<Women>这两个函数
+// 然后根据实际调用的时候传递进来的实参类型去调用不同的实例化的函数，从而实现了多态
+
+// 总结：
+// 传统多态，也叫做动态多态 或者 运行时多态，是需要访问虚函数表指针，所以对于性能多少会有点影响
+// 模板多态，也叫做静态多态，编译期间就确定好了具体的调用实例，就不存在执行期间的性能问题
+// 这也是泛型编程和面向对象程序设计的一个不同之处的体现
+// 静态多态，只要支持相同的语法，就允许不同的类型的对象以同样的方式被操纵
+// (比如这里，只要有eat函数。就允许调用该成员函数，因为这是在编译期间就完成的多态)
+
+namespace _nmsp1
+{
+    
+    class Human
+    {
+    public:
+        virtual void eat()
+        {
+            std::cout << "人类吃米饭和面食" << std::endl;
+        }
+        virtual ~Human()
+        {
+            // 作为父类的析构函数一般都应该是虚析构
+        }
+    };
+    
+    class Man:public Human
+    {
+    public:
+        virtual void eat()
+        {
+            std::cout << "男人喜欢吃米食" << std::endl;
+        }
+    };
+    
+    class Women:public Human
+    {
+    public:
+        virtual void eat()
+        {
+            std::cout << "女人喜欢吃面食" << std::endl;
+        }
+    };
+    
+    
+    void func()
+    {
+        Man objMan;
+        Women objWomen;
+        
+        // 父类引用绑定（指向）子类对象，多态
+        Human &yyHoman1 = objMan;
+        // 父类指针指向子类对象
+        Human *yyHoman2 = &objWomen;
+        
+        yyHoman1.eat();
+        // 男人喜欢吃米食
+        yyHoman2->eat();
+        // 女人喜欢吃面食
+    }
+}
+
+namespace _nmsp2
+{
+    
+    class Human
+    {
+    public:
+         void eat()
+        {
+            std::cout << "人类吃米饭和面食" << std::endl;
+        }
+        virtual ~Human()
+        {
+            // 作为父类的析构函数一般都应该是虚析构
+        }
+    };
+    
+    class Man
+    {
+    public:
+        void eat()
+        {
+            std::cout << "男人喜欢吃米食" << std::endl;
+        }
+    };
+    
+    class Women
+    {
+    public:
+        void eat()
+        {
+            std::cout << "女人喜欢吃面食" << std::endl;
+        }
+    };
+    
+    template<typename T>
+    void eatTnpl(T& obj)
+    {
+        obj.eat();
+    }
+    
+    void func()
+    {
+        Man objMan;
+        Women objWomen;
+        
+        eatTnpl(objMan);
+        // 男人喜欢吃米食
+        eatTnpl(objWomen);
+        // 女人喜欢吃面食
+    }
+}
+
+
+int main()
+{
+    // _nmsp1::func();
+    _nmsp2::func();
+
+    return 0;
+}

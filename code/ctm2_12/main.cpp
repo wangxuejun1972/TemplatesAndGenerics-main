@@ -1,0 +1,319 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, Java, PHP, Ruby, Perl,
+C#, VB, Swift, Pascal, Fortran, Haskell, Objective-C, Assembly, HTML, CSS, JS, SQLite, Prolog.
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+// 友元函数
+// 函数模板可以被声明为友元函数
+// 让函数模板的某个实例化成为类的友元函数
+// funcTF(34, "success");会实例化出来void funcTF<int, std::string>(int v1, std::string v2){...}这样一个函数
+
+// 让函数模板的某个实例化成为类模板的友元函数
+
+// 友元模板
+// 将funcTF的泛化版本声明为友元模板之后，funcTF的特化版本也就被声明为了友元模板
+// 编译器会把全特化的函数模板看作是一个实例化的函数（已存在的函数）
+
+// 在类模板中定义友元函数
+// 这种友元函数是能够被调用的，而且也只有在调用这个函数的时候，编译器才会实例化出这个函数
+// 为什么这样定义友元函数？
+// 一般都是因为在该友元函数中会用到这个类模板，这个友元函数的调用其实和普通的函数调用差不多
+// 把它当成普通函数看待即可
+
+namespace _nmsp1
+{
+    // 和类模板一样，如果是函数模板的某个实例被添加为类（类模板）的友元函数，
+    // 那么就需要在类上面增加一个函数模板声明
+    // 函数模板funcTF的申明
+    template<typename T, typename F> void funcTF(T v1, F v2);
+    
+    
+    // Men类
+    class Men
+    {
+        friend void funcTF<int, std::string>(int, std::string);
+        // 注意这里<int, std::string>这两个参数在这里已经是模板实参了
+        // 因为这里有了实参，所以对于这个模板函数，他们的类型都能进行相互推算
+        // 也就是<int, std::string>能够推算出(int, std::string)，
+        // (int, std::string)能够推算出<int, std::string>
+        // 所以这里<>和()里的实参可以只写其中一个，但是不能两个都不写，而且<>里内容不写，<>本身也必须写上
+        // friend void funcTF<>(int, std::string);
+        // friend void funcTF<int, std::string>();
+        
+        friend void funcTF<std::string, float>(std::string, float);
+        friend void funcTF<double, std::string>(double, std::string);
+        
+        
+    private:
+        void funcMen() const
+        {
+            std::cout << "Men::funcMen()被调用" << std::endl;
+        }
+    };
+    
+    
+    template<typename T, typename F>
+    void funcTF(T v1, F v2)
+    {
+        std::cout << "v1 = " << v1 << std::endl;
+        std::cout << "v2 = " << v2 << std::endl;
+        
+        // 函数模板funcTF不是类Men的友元函数，自然不能访问Men的私有成员
+        // 解决方法就是让funcTF成为类Men的友元函数
+        Men mymen;
+        mymen.funcMen();
+    }
+    
+    void func()
+    {
+        // 调用funcTF的方法很多
+        // 模板参数全部有编译器自行推断
+        // 还有这里有个点需要注意一下，字符串因为他是既可以被认为是char*，也可以被推算为std::string
+        // 所以对于这种有模糊概念，任意混淆的，还是得在实例化的时候明确指定是什么类型
+        // funcTF(34, "success");
+        funcTF<int, std::string>(34, "success");
+        // v1 = 34
+        // v2 = success
+        // Men::funcMen()被调用
+        
+        
+        // 第一个模板参数指定，第二个模板参数编译器自行推断
+        funcTF<std::string>("failed", 98.99f);
+        // v1 = failed
+        // v2 = 98.99
+        // Men::funcMen()被调用
+        
+        
+        // 完全手工指定模板参数
+        funcTF<double, std::string>(242.55, "oops");
+        // v1 = 242.55
+        // v2 = oops
+        // Men::funcMen()被调用
+    }
+}
+
+namespace _nmsp2
+{
+    // 和类模板一样，如果是函数模板的某个实例被添加为类（类模板）的友元函数，
+    // 那么就需要在类上面增加一个函数模板声明
+    // 函数模板funcTF的申明
+    template<typename T, typename F> void funcTF(T v1, F v2);
+    
+    
+    // Men类模板
+    template<typename T>
+    class Men
+    {
+        friend void funcTF<int, std::string>(int, std::string);
+        // 注意这里<int, std::string>这两个参数在这里已经是模板实参了
+        // 因为这里有了实参，所以对于这个模板函数，他们的类型都能进行相互推算
+        // 也就是<int, std::string>能够推算出(int, std::string)，
+        // (int, std::string)能够推算出<int, std::string>
+        // 所以这里<>和()里的实参可以只写其中一个，但是不能两个都不写，而且<>里内容不写，<>本身也必须写上
+        // friend void funcTF<>(int, std::string);
+        // friend void funcTF<int, std::string>();
+        
+        friend void funcTF<std::string, float>(std::string, float);
+        friend void funcTF<double, std::string>(double, std::string);
+        
+        
+    private:
+        void funcMen() const
+        {
+            std::cout << "Men::funcMen()被调用" << std::endl;
+        }
+    };
+    
+    
+    template<typename T, typename F>
+    void funcTF(T v1, F v2)
+    {
+        std::cout << "v1 = " << v1 << std::endl;
+        std::cout << "v2 = " << v2 << std::endl;
+        
+        // 函数模板funcTF不是类模板Men的友元函数，自然不能访问类模板Men的私有成员
+        // 解决方法就是让funcTF成为类模板Men的友元函数
+        Men<int> mymen;
+        mymen.funcMen();
+    }
+    
+    void func()
+    {
+        // 调用funcTF的方法很多
+        // 模板参数全部有编译器自行推断
+        // 还有这里有个点需要注意一下，字符串因为他是既可以被认为是char*，也可以被推算为std::string
+        // 所以对于这种有模糊概念，任意混淆的，还是得在实例化的时候明确指定是什么类型
+        // funcTF(34, "success");
+        funcTF<int, std::string>(34, "success");
+        // v1 = 34
+        // v2 = success
+        // Men::funcMen()被调用
+        
+        
+        // 第一个模板参数指定，第二个模板参数编译器自行推断
+        funcTF<std::string>("failed", 98.99f);
+        // v1 = failed
+        // v2 = 98.99
+        // Men::funcMen()被调用
+        
+        
+        // 完全手工指定模板参数
+        funcTF<double, std::string>(242.55, "oops");
+        // v1 = 242.55
+        // v2 = oops
+        // Men::funcMen()被调用
+    }
+}
+
+namespace _nmsp3
+{
+    // 和类模板一样，如果是函数模板的某个实例被添加为类（类模板）的友元函数，
+    // 那么就需要在类上面增加一个函数模板声明
+    // 函数模板funcTF的申明
+    // template<typename T, typename F> void funcTF(T v1, F v2);
+    // 和类模板一样，如果某个函数模板被添加为类（类模板）的友元模板后，那么这行函数模板声明也就不需要了
+    // 写不写都没问题了
+    
+    
+    // Men类模板
+    template<typename T>
+    class Men
+    {
+        
+        // friend void funcTF<int, std::string>(int, std::string);
+        // friend void funcTF<std::string, float>(std::string, float);
+        // friend void funcTF<double, std::string>(double, std::string);
+        
+        // 让funcTF成为类模板Men的友元模板
+        template<typename TT, typename F> friend void funcTF(TT v1, F v2);
+        // 有了这行，就不需要一个一个去设置某个函数模板实例成为类模板的友元函数了
+        
+        
+    private:
+        void funcMen() const
+        {
+            std::cout << "Men::funcMen()被调用" << std::endl;
+        }
+    };
+    
+    
+    template<typename T, typename F>
+    void funcTF(T v1, F v2)
+    {
+        std::cout << "v1 = " << v1 << std::endl;
+        std::cout << "v2 = " << v2 << std::endl;
+        
+        // 函数模板funcTF不是类模板Men的友元函数，自然不能访问类模板Men的私有成员
+        // 解决方法就是让funcTF成为类模板Men的友元函数
+        Men<int> mymen;
+        mymen.funcMen();
+    }
+    
+    // 将funcTF的泛化版本声明为友元模板之后，funcTF的特化版本也就被声明为了友元模板
+    template<>
+    void funcTF(int v1, std::string v2)
+    {
+        
+        std::cout << "将funcTF的泛化版本声明为友元模板之后，funcTF的特化版本也就被声明为了友元模板" << std::endl;
+        std::cout << "v1 = " << v1 << std::endl;
+        std::cout << "v2 = " << v2 << std::endl;
+        
+        // 函数模板funcTF不是类模板Men的友元函数，自然不能访问类模板Men的私有成员
+        // 解决方法就是让funcTF成为类模板Men的友元函数
+        Men<int> mymen;
+        mymen.funcMen();
+    }
+    
+    void func()
+    {
+        // 调用funcTF的方法很多
+        // 模板参数全部有编译器自行推断
+        // 还有这里有个点需要注意一下，字符串因为他是既可以被认为是char*，也可以被推算为std::string
+        // 所以对于这种有模糊概念，任意混淆的，还是得在实例化的时候明确指定是什么类型
+        // funcTF(34, "success");
+        funcTF<int, std::string>(34, "success");
+        // 将funcTF的泛化版本声明为友元模板之后，funcTF的��化版本也就被声明为了友元模板
+        // v1 = 34
+        // v2 = success
+        // Men::funcMen()被调用
+        
+        
+        // 第一个模板参数指定，第二个模板参数编译器自行推断
+        funcTF<std::string>("failed", 98.99f);
+        // v1 = failed
+        // v2 = 98.99
+        // Men::funcMen()被调用
+        
+        
+        // 完全手工指定模板参数
+        funcTF<double, std::string>(242.55, "oops");
+        // v1 = 242.55
+        // v2 = oops
+        // Men::funcMen()被调用
+        
+        
+    }
+}
+
+namespace _nmsp4
+{
+    // Men类模板
+    template<typename T>
+    class Men
+    {
+        // 在类模板中定义友元函数
+        // 在实际使用的时候，只需要把该函数看做全局函数一样（普通函数一样）进行调用即可
+        friend void funcInline(Men<T>& tmpmen)
+        {
+            tmpmen.funcMen();
+        }
+        
+        
+    private:
+        void funcMen() const
+        {
+            std::cout << "Men::funcMen()被调用" << std::endl;
+        }
+    };
+    
+    void func()
+    {
+        std::cout << "---------------------------------------------------------" << std::endl;
+        
+        // 直接调用Men类模板中定义的友元函数funcInline()
+        Men<double> menObj2;    // 类模板实例化，但是 funcInline 并没有被实例化出来
+        funcInline(menObj2);    // funcInline 被调用了，在这里才被实例化出来
+        // Men::funcMen()被调用
+        
+        // 直接调用Men类模板中定义的友元函数funcInline()
+        Men<char> menObj3;      // 类模板实例化，但是 funcInline 并没有被实例化出来
+        funcInline(menObj3);    // funcInline 被调用了，在这里才被实例化出来
+        // Men::funcMen()被调用
+        
+        // 而且注意到，虽然我们是把funcInline这个友元函数给包裹在类模板中，
+        // 但是实际调用的时候，可以就想全局函数一样进行调用
+        
+        // 虽然funcInline在类模板实例化的时候，并不会被一并实例化出来，
+        // 只有在实际调用的时候才会被实例化出来
+        
+        // 因为 funcInline 在类模板中，所以在调用funcInlien 时，如果funcInline中的代码很简单
+        // 那么 funcInline 会别当成内联函数提高运行效率
+    }
+}
+
+int main()
+{
+    // _nmsp1::func();
+    // _nmsp2::func();
+    // _nmsp3::func();
+    _nmsp4::func();
+
+    return 0;
+}
+

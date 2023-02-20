@@ -1,0 +1,291 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, Java, PHP, Ruby, Perl,
+C#, VB, Swift, Pascal, Fortran, Haskell, Objective-C, Assembly, HTML, CSS, JS, SQLite, Prolog.
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+
+// 模板的一些特殊继承关系
+// 奇特（奇异）的递归模板模式（CRTP）：Curiously Recurring Template Pattern
+// 他不是一种新技术，而是模板编程中的一种手法。把派生类作为基类的模板参数
+// 这种编程手法在泛型编程中很常见，需要慢慢适应
+// 这种编程方式有什么用呢？
+
+// 1）在基类中使用派生类对象
+
+// 2）基于减少派生中代码量的考虑
+// 出发点是尽可能把一些代码挪到基类中，从而有效的减少派生类中的代码量
+
+// 3）基类调用派生类接口与多态的体现（静态多态 编程技术）
+// 利用这种编程方式，就可以实现在编译期间实现静态多态，通过基类来获取派生类的多态行为
+
+// 那就有个问题。既然已经可以通过虚函数实现动态多态，为什么还需要这种静态多态呢？
+// 当然，在我们这里这个范例里，你不用这种奇异的递归模板模式，而是直接用虚函数去写eat函数
+// 像传统的多态一样，在基类中写eat虚函数，然后在派生类中也用虚函数eat,这种方式实现多态肯定也是可以的
+// 但是，因为eat是一个普通的成员函数，你可以改造为虚函数，但是如果他是一个函数模板，或者是一个 静态成员函数的话
+// 你就没有办法把他写成一个虚函数，这种时候你如果还想实现多态调用的话，你必须得考虑这种
+// 奇异的递归模板模式CRTP来实现静态多态效果
+
+namespace _nmsp1
+{
+    // T代表的就是派生类
+    // Base就是类模板
+    template<typename T>
+    class Base
+    {
+    public:
+    // 添加一个函数，该函数的功能是把父类对象转换成子类对象
+        void asDerived()
+        {
+            // 静态类型转换（硬转），把基类对象（*this）装换成一个派生类对象，
+            // 转换结果就变成一个子类对象引用，然后他就可以直接调用派生类对象的函数
+            // 注意这里：因为派生类对象也是基类对象，所以这种静态类型转换才没问题
+            T &derived = static_cast<T&>(*this);
+            derived.myfunc();
+            // 调用派生类的成员函数
+            // 这种代码生效的原因是，在单继承情况下，派生类对象，同时也是基类对象
+            // 他包含父类子对象的部分
+        }
+        
+    private:
+    // 为了防止下面提到的笔误难以被察觉的问题，这里将构造函数改为私有，同时将子类改为友元类
+        Base() {}
+        friend T;   // 友元不需要任何修饰符（或者在任何一个访问修饰符下，都是没有影响的）
+        
+        // 为什么添加完这两个东西后，实例化那个错误的Derived3对象的时候，编译器就会报错呢？
+        // 首先在创建这个Derived3对象的时候，因为父类中有构造函数，所以就需要调用该类模板中的这个私有构造函数
+        // 因为这里是私有的构造函数，如果class Derived3:public Base<Derived1>这里没有写错的话，应该是Derived3是这个
+        // Base基类类模板的友元，所以Derived3就应该能正常访问该私有构造函数，
+        // 但是因为书写错误，这里将Derived3错误的写成了Derived1，导致Derived1是该基类的友元类，
+        // 那Dericved1变成友元类和Derived3没有任何关系，所以Derived3就没办法调用这个基类的私有的构造函数，
+        // 所以Derived3在实例化创建对象的时候救护报编译错误
+        
+        // 所以在这种CRTP中，经常能看到构造函数写为私有，然后将派生类添加为友元
+    };
+    
+    // 将派生类本身作为类型模板参数传递给基类模板的模板参数（这样，基类实例化出来的就是一个派生类（或者说，基类即是基类的同时，又是派生类））
+    class Derived1:public Base<Derived1>    // Derived1是一个普通类
+    {
+    public:
+        void myfunc()
+        {
+            std::cout << "Derived1::myfunc()执行了" << std::endl;
+        }
+    };
+    
+    
+    // 这里介绍一种技巧，实际编程中可能用到
+    // 这里本来应该传递进来的是Derived3这个派生类类型作为基类模板的模板参数，
+    // 但是因为书写错误，写成了Derived1
+    // 这种错误比较隐晦，很难被发现，而且，在实际实例化Derived3对象的时候，该对象也能正常调用asDerived()函数
+    // 为了防止这种笔误，就应该改造一下Base基类类模板，改造完之后，这种笔误（错误写法）就不能正常进行实例化
+    // 在实例化Derived3 myd3;的时候，就会产生编译错误，从而帮助我们排错
+    class Derived3:public Base<Derived3>
+    {
+    public:
+        void myfunc()
+        {
+            std::cout << "Derived3::myfunc()执行了" << std::endl;
+        }
+    };
+    
+    
+    // 这里Derived2和Derived1不一样，Derived2是一个类模板，所以他在继承的时候，基类需要传递进去类型参数T
+    template<typename T>
+    class Derived2:public Base<Derived2<T>> 
+    {
+    public:
+        
+    };
+    
+    void func()
+    {
+        Derived1 myd;
+        myd.asDerived();
+        // Derived1::myfunc()执行了
+        
+        // 这里调用的是基类的成员函数
+        // 然后在该函数内部进行了将基类转为派生类对象后
+        // 再调用该派生类的myfunc()函数
+        // 所以就得到了这个打印
+        
+        Derived3 myd3;
+        myd3.asDerived();
+        // Derived3::myfunc()执行了
+    }
+}
+
+namespace _nmsp2
+{
+    // 观察这一整个代码，我们实现的是将派生类的 == 判断挪到了基类中
+    // 使用了在类模板中定义友元函数的手段把全局的 operator== 放到了基类中
+    
+    template<typename T>
+    struct shape
+    {
+        // 在类模板中定义友元，那么这个友元函数就相当于全局函数，可以像使用普通函数一样进行调用
+        // 因为该函数实际业务需要是会用到shape类中的成员，所以就写在shape类中
+        friend bool operator==(const shape<T>& obj1, const shape<T>& obj2)
+        {
+            const T& objtmp1 = static_cast<const T&>(obj1); // 派生类也是基类对象，所以这种静态类型转换没有问题
+            const T& objtmp2 = static_cast<const T&>(obj2); // 派生类也是基类对象，所以这种静态类型装换没有问题
+        
+            
+            // 如果我想用外面那个<重载运算来进行这个 == 的判断实现。应该怎么办？
+            // 那就进行两个条件判断，如果a 既不小于b, b也不小于a，那他们两不就相等吗
+            if (!(objtmp1 < objtmp2) && !(objtmp2 < objtmp1))
+            {
+                return true;
+            }
+            return false;
+        }
+    };
+    
+    struct square:public shape<square>
+    {
+        int sideLength; // 边长
+    };
+    
+    // 类外运算符重载
+    bool operator<(square const &obj1, square const &obj2)
+    {
+        if (obj1.sideLength < obj2.sideLength)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    // 当然，这里只是为了演示这种类模板的奇异继承关系。这个operator== 也可以写在类外，实现一个全局的==重载
+    // 效果也是一样的
+    template<typename T>
+    bool operator==(const shape<T>& obj1, const shape<T>& obj2)
+    {
+        const T& objtmp1 = static_cast<const T&>(obj1); // 派生类也是基类对象，所以这种静态类型转换没有问题
+        const T& objtmp2 = static_cast<const T&>(obj2); // 派生类也是基类对象，所以这种静态类型装换没有问题
+    
+        
+        // 如果我想用外面那个<重载运算来进行这个 == 的判断实现。应该怎么办？
+        // 那就进行两个条件判断，如果a 既不小于b, b也不小于a，那他们两不就相等吗
+        if (!(objtmp1 < objtmp2) && !(objtmp2 < objtmp1))
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    void func()
+    {
+        square objsq1;
+        objsq1.sideLength = 199;
+        square objsq2;
+        objsq2.sideLength = 210;
+        
+        if(!(objsq1==objsq2))
+        {
+            std::cout << "objsq1 和 objsq2 不相等" << std::endl;
+        }
+        else
+        {
+            std::cout << "objsq1 和 objsq2 相等" << std::endl;
+        }
+        
+        // objsq1 和 objsq2 不相等
+        
+        
+    }
+}
+
+namespace _nmsp3
+{
+    
+    // 基类模板
+    template<typename T>
+    class Humen
+    {
+    public:
+        T& toChild()
+        {
+            return static_cast<T&>(*this);
+        }
+        
+        void parentEat()
+        {
+            toChild().eat();
+            
+            // 这个给人的感觉就是派生类给基类提供了调用接口
+        }
+    
+    private:
+        Humen(){}
+        
+        friend T;   // 将派生类声明为友元
+    
+    };
+    
+    
+    class Men:public Humen<Men>
+    {
+    public:
+        void eat()
+        {
+            std::cout << "男人喜欢吃米饭" << std::endl;
+        }
+        
+    };
+    
+    class Women:public Humen<Women>
+    {
+    public:
+        void eat()
+        {
+            std::cout << "女人喜欢吃面食" << std::endl;
+        }
+    };
+    
+    // 添加一个函数模板（因为我们希望通过函数模板来体现多态）
+    // 这里传递进来的是父类引用
+    template<typename T>
+    void callHumenFunc(Humen<T>& t)
+    {
+        t.parentEat();
+    }
+    
+    
+    
+    void func()
+    {
+        Men myMen;
+        Women myWomen;
+        
+        myMen.parentEat();
+        // 男人喜欢吃米饭
+        
+        myWomen.parentEat();
+        // 女人喜欢吃面食
+        
+        std::cout << "----------------------" << std::endl;
+        
+        // ----------------------
+        callHumenFunc(myMen);
+        // 男人喜欢吃米饭
+        callHumenFunc(myWomen);
+        // 女人喜欢吃面食
+    }
+}
+
+
+int main()
+{
+    // _nmsp1::func();
+    // _nmsp2::func();
+    _nmsp3::func();
+
+    return 0;
+}
+

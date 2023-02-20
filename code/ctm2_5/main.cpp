@@ -1,0 +1,203 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+
+// 类模板的各种特化
+// 一般来讲，缩写的类模板都是泛化版本类模板
+// 特化的类模板是通过泛化的类模板来生成的，所以先要有泛化版本，才能有特化版本
+
+// 类模板的全特化
+// 全特化就是把TC这个泛化版本中的所有模板参数都用具体类型来代替，构成一个特殊的版本
+// 在理解上：泛化版本的类模板与全特化版本的类模板，只是名字相同（都叫TC）,在其他方面，可以把实例化后的他们理解为两个完全不同的类
+
+// 普通成员函数的全特化
+
+// 静态成员变量的全特化
+
+// 如果进行了普通成员函数的全特化或者是静态成员变量的全特化
+// 那么就无法用这些全特化时指定的类型来对整个类模板进行全特化
+
+// 类模板的偏特化（局部特化）
+// 模板参数数量上的偏特化
+// 模板参数范围上的偏特化
+// int->const int; 类型变小  T -> t&； T->T&&； T->T*;这些都是类型范围变小
+
+    
+
+namespace _nmsp1
+{
+    
+    // 泛化版本
+    template<typename T, typename U>
+    class TC
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC泛化版本的构造函数执行了" << std::endl;
+        }
+        void functest()
+        {
+            std::cout << "functest()执行" << std::endl;
+        }
+        
+        static int m_stc;       // 声明一个静态成员变量
+    };
+    
+    // 定义静态成员变量
+    template<typename T, typename U>
+    int TC<T, U>::m_stc = 100;
+    
+    // 静态成员变量全特化
+    template<>
+    int TC<double, int>::m_stc = 200;
+    
+    // 当调用泛化版本的时候，我想要针对某个成员函数进行全特化
+    // 他取代的是泛化版本中的functest
+    template<>
+    void TC<double, int>::functest()
+    {
+        std::cout << "普通成员函数 TC<double, int>::functest()的全特化版本执行" << std::endl;
+    }
+    
+    
+    // 全特化版本
+    template<>  // 全特化表示所有类型模板参数都要用具体类型代表，所以<>里为空
+    class TC<int, int>  // 模板名（类名）后面是否有<>是泛化版本和特化版本的明显区别
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC<int, int> TC全特化版本的构造函数执行了" << std::endl;
+        }
+        void functest();
+        // {
+        //     std::cout << "TC<int, int> functest()执行" << std::endl;
+        // }
+        
+        void functest2()
+        {
+            std::cout << "TC<int, int> functest2()执行" << std::endl;
+        }
+    };
+    
+    // 如果进行了普通成员函数的全特化或者是静态成员变量的全特化
+    // 那么就无法用这些全特化时指定的类型来对整个类模板进行全特化
+    // 下面个全特化无法实现
+    // template<>  // 全特化表示所有类型模板参数都要用具体类型代表，所以<>里为空
+    // class TC<double, int>  // 模板名（类名）后面是否有<>是泛化版本和特化版本的明显区别
+    // {
+    // public:
+    //     TC()
+    //     {
+    //         std::cout << "TC<int, int> TC全特化版本的构造函数执行了" << std::endl;
+    //     }
+    //     void functest();
+    //     {
+    //         std::cout << "TC<double, int> functest()全特化版本执行" << std::endl;
+    //     }
+        
+    //     void functest2()
+    //     {
+    //         std::cout << "TC<int, int> functest2()执行" << std::endl;
+    //     }
+    // };
+    
+    // template<>  // 注意，对于全特化版本的成员函数，在类外进行定义的时候，是不需要写template<>，写了编译会报错
+    // 所以，从这种角度看，全特化版本的类模板，更像一个普通类
+    void TC<int, int>::functest()
+    {
+        std::cout << "TC<int, int> functest()执行" << std::endl;
+    }
+    
+    // 偏特化版本（参数数量）
+    template<typename U>
+    class TC<float, U>
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC<float, U>::TC()偏特化版本执行" << std::endl;
+        }
+        void functest();
+    };
+    template<typename U>
+    void TC<float, U>::functest()
+    {
+        std::cout << "TC<float, U>::functest()偏特化版本普通函数执行" << std::endl;
+    }
+    
+    
+    // 偏特化版本 （参数范围）
+    template<typename T, typename U>
+    class TC<const T, U*>
+    {
+    public:
+        TC()
+        {
+            std::cout << "TC<const T, U*>::TC()偏特化版本构造函数执行" << std::endl;
+        }
+        
+        void functest();
+    };
+    template<typename T, typename U>
+    void TC<const T, U*>::functest()
+    {
+        std::cout << "TC<const T, U*>::functest()偏特化版本的普通函数执行" << std::endl;
+    }
+    
+    void func()
+    {
+        TC<int, float> mtc;
+        mtc.functest();
+        // TC泛化版本的构造函数执行了
+        // functest()执行
+        
+        TC<int, int> mtc2;
+        mtc2.functest();
+        mtc2.functest2();
+        // TC<int, int> TC全特化版本的构造函数执行了
+        // TC<int, int> functest()执行
+        // TC<int, int> functest2()执行
+        
+        // 普通成员函数的全特化
+        TC<double, int> mtc3;
+        mtc3.functest();
+        // TC泛化版本的构造函数执行了
+        // 普通成员函数 TC<double, int>::functest()的全特化版本执行
+        
+        std::cout << "mtc3.m_stc = " << mtc3.m_stc << std::endl;// 100 全特化之后 200
+        
+        
+        // ------------------------
+        // 模板参数数量上的偏特化
+        TC<float, int> mtc4;
+        mtc4.functest();
+        // TC<float, U>::TC()偏特化版本执行
+        // TC<float, U>::functest()偏特化版本普通函数执行
+        
+        // ------------------------
+        // 模板参数范围上的偏特化
+        TC<const float, int *> mtc5;
+        mtc5.functest();
+        // TC<const T, U*>::TC()偏特化版本构�函数执行
+        // TC<const T, U*>::functest()偏特化版本的普通函数执行
+
+    }
+}
+
+
+int main()
+{
+    _nmsp1::func();
+
+    return 0;
+}
+
